@@ -60,10 +60,10 @@ def generateBasicStats(filesData):
 
     #For each file-data, extract the basic stats, and add them to the df
     for fileData in filesData:
-        basicStats = fileData.groupby(['value'], as_index=False).size()
-        basicStats['total_minutes'] = basicStats.sum()
+        stats = fileData.groupby(['value'], as_index=False).size()
+        stats['total_minutes'] = stats.sum()
         date = getSleepDate(fileData)
-        basicStats.loc[date] = basicStats
+        basicStats.loc[date] = stats
 
     #Derive additional stats
     basicStats = basicStats.fillna(0).astype(int)
@@ -118,14 +118,15 @@ def generateIntradayStats(filesData, useTime=True):
     #Create new df to store the stats
     if useTime:
         minutes = pd.date_range('00:00', '23:59', freq='1min')
-        intervalsStats = pd.DataFrame(columns=[x.time() for x in minutes])
+        intervalsStats = pd.DataFrame(columns=[x.time().strftime("%H:%M")
+                                               for x in minutes])
     else:
         intervalsStats = pd.DataFrame(columns=np.arange(600))
 
     #For each file-data, extract the basic stats, and add them to the df
     for fileData in filesData:
         date = getSleepDate(fileData)
-        fileData['time'] = fileData['datetime'].dt.time
+        fileData['time'] = [x.strftime("%H:%M") for x in fileData['datetime'].dt.time]
         fileData.set_index(['time'], inplace=True)
         intervalsStats.loc[date] = fileData['value']
 
