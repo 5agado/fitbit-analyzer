@@ -16,6 +16,7 @@ dependencies:
 - jupyter_core=4.1.0=py35_0
 - libpng=1.6.17=vc14_1
 - libtiff=4.0.6=vc14_1
+- lxml=3.6.0=py35_0
 - markupsafe=0.23=py35_1
 - matplotlib=1.5.1=np110py35_0
 - mistune=0.7.2=py35_0
@@ -39,10 +40,11 @@ dependencies:
 - pyzmq=15.2.0=py35_0
 - qt=4.8.7=vc14_7
 - qtconsole=4.2.1=py35_0
+- requests=2.10.0=py35_0
 - scikit-learn=0.17.1=np110py35_0
 - scipy=0.17.0=np110py35_0
 - seaborn=0.7.0=py35_0
-- setuptools=20.7.0=py35_0
+- setuptools=21.2.1=py35_0
 - simplegeneric=0.8.1=py35_0
 - sip=4.16.9=py35_2
 - six=1.10.0=py35_0

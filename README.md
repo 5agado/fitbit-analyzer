@@ -4,14 +4,37 @@ Analyzer and statistics generator for Fitbit data like sleep, steps count and he
 ##Usage
 *requirements.txt* is the exported environment file. See [here](http://conda.pydata.org/docs/using/envs.html#share-an-environment) for a guide on how to manage Conda environments.
 
-The project is still a WIP, now just focusing on sleep measures.   
-I used [this code](https://github.com/andrewjw/python-fitbit) to scrape all my data. It creates one folder per year, and then one sub-folder for each day, in which the different files are generated (e.g. *sleep.txt*, *steps.txt*).
+##Scraper
+I [my article](https://medium.com/@5agado/a-quest-for-better-sleep-with-fitbit-data-analysis-5f10b3f548a#.xhzjsb6wz) I complained about the issue related with obtaining all my personal Fitbit data. There is no immediate click-and-download way to get all the data you interested in, and what I did when I started this analysis of mine was to rely on some website-scraping Python code. The most recent version of working code I was able to find was [the one of Andrew](https://github.com/andrewjw/python-fitbit). 
 
+After I had played a bit with the data, I wanted to improve such code, for example by using the Session object from Requests, and adding the scraping of heartbeat data. Is nice playing a bit with the basics of such mechanisms, but I soon became frustrated trying to replicate the graph data call of the Fitbit website. I searched again for easier and better solutions, and I ended up [on this Fitbit community post](https://community.fitbit.com/t5/Web-API/Intraday-data-now-immediately-available-to-personal-apps/td-p/1014524), explaining a simplified way for a user to collect all his data via the official APIs. Briefly speaking you have to create a Fitbit app on the website, configure it as described in the previous link and implement a OAuth flow in order to obtain the access tokens needed for the API calls.  
+If you use Python, I suggest to rely on [the official python implementation of the Fitbit API](http://python-fitbit.readthedocs.io/en/latest/index.html#fitbit.Fitbit.intraday_time_series) and give a look [here](http://blog.mr-but-dr.xyz/en/programming/fitbit-python-heartrate-howto/) for a clear explanation on what needs to be done to have all setup and running.
+I have to admit that this ended up to be easier and cleaner that the previous scraper solution, still, you need to keep a couple of things in mind:
+
+1. You have to write some code to clean the JSON data returned by the API, and extract the info relevant to you
+2. Seems like the API have a limit of 150 calls per hour, so you might need to repeat the operation several times depending on how much and what data you need
+
+###Data Format
+All this said, in this repository I am not sharing the scraper code, but in the *util* folder you can find some code for loading sleep, heart-beat and steps data as provided by the previously mentioned procedure. 
+For the data-dump folder I have one folder per year, and then one sub-folder for each day, in which the different files are generated (e.g. *sleep.json*, *steps.json*).
+
+##Sleep Stats
+Sleep values are mapped like this: 0=none (no measure taken), 1=sleeping, 2=restless, 3=awake.
+
+* **Basic Stats** (sleep values count, sleep efficiency, hours of sleep, total minutes in bed)
+* **Timing Stats** (first minute asleep, to bed time, wake up time, sleep interval min/max length)
+* **Intraday Stats** minute to minute report for each day, for the specified sleep values
+* **Intervals Stats** for each day all the sleep intervals lengths
+
+
+##Heart Beat Stats
+* **Basic Stats** (count, mean, min, max, std) values for the entire dataset, or for aggregated subsets. Common aggregation features are date, year, month, day, day of week and hour  
+* **Daily Stats** plotting of average hb by day
+* **Min/Max Values** get the N min or max heartbeat values in the dataset
 
 ##TODO
-* better and more general folder search for data files
 * proper testing of current sleep stats
-* possibility of rewriting scraper using Requests
+* derive sleep-states (REM/NREM) stats (e.g. identify, how long in each) from basic ones, or via correlation with heart-beat (as for now doesn't seem to be feasible actual ECG is still the more proper option)
 
 ## License
 

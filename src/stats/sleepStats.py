@@ -20,35 +20,25 @@ STATS_NAME_BASIC_AND_TIMING = 'basicAndTimingStats'
 STATS_NAME_INTERVALS = 'intervalsStats'
 STATS_NAME_INTRADAY = 'intradayStats'
 
-def generateStatsFrom(folder, statsType, **kwargs):
+def generateStatsFrom(data, statsType, **kwargs):
     """
 
-    :param folder: folder where the fitbit data dump is.
-    Should contain one sub-folder for each day
+    :param data: sleep data. As for now a list of dataframes, one for each date
     :return:
     """
-    filepaths = utils.getAllFilepaths(folder)
-    filesData = []
-
-    for path in filepaths:
-        data = utils.loadIntradayData(path)
-        #Filter out empty records (all values equals to zero)
-        if (data['value']==SleepValue.none.value).all():
-            continue
-        filesData.append(data)
 
     if statsType == STATS_NAME_BASIC:
-        stats = generateBasicStats(filesData)
+        stats = generateBasicStats(data)
     elif statsType == STATS_NAME_TIMING:
-        stats = generateTimingStats(filesData, **kwargs)
+        stats = generateTimingStats(data, **kwargs)
     elif statsType == STATS_NAME_BASIC_AND_TIMING:
-        basicStats = generateBasicStats(filesData)
-        timingStats = generateTimingStats(filesData, **kwargs)
+        basicStats = generateBasicStats(data)
+        timingStats = generateTimingStats(data, **kwargs)
         stats = pd.concat([basicStats, timingStats], axis=1)
     elif statsType == STATS_NAME_INTERVALS:
-        stats = generateIntervalsStats(filesData, **kwargs)
+        stats = generateIntervalsStats(data, **kwargs)
     elif statsType == STATS_NAME_INTRADAY:
-        stats = generateIntradayStats(filesData, **kwargs)
+        stats = generateIntradayStats(data, **kwargs)
     else:
         raise Exception(statsType + ' Stat not implemented')
     return stats
@@ -57,6 +47,7 @@ def generateStatsFrom(folder, statsType, **kwargs):
 def generateBasicStats(filesData):
     #Create new df to store the stats
     basicStats = pd.DataFrame(columns=[1,2,3,'total_minutes','sleep_efficiency'])
+    basicStats.index.rename('date', inplace=True)
 
     #For each file-data, extract the basic stats, and add them to the df
     for fileData in filesData:
@@ -88,6 +79,7 @@ def generateTimingStats(filesData, minSleepIntervalRequired=0):
                                            'wake_up_time',
                                            'sleep_interval_max_len',
                                            'sleep_interval_avg_len'])
+    intervalsStats.index.rename('date', inplace=True)
 
     #For each file-data, extract the basic stats, and add them to the df
     for fileData in filesData:
@@ -118,19 +110,21 @@ def generateIntradayStats(filesData, useTime=True):
     #Create new df to store the stats
     if useTime:
         minutes = pd.date_range('00:00', '23:59', freq='1min')
-        intervalsStats = pd.DataFrame(columns=[x.time().strftime("%H:%M")
+        intradayStats = pd.DataFrame(columns=[x.time().strftime("%H:%M")
                                                for x in minutes])
     else:
-        intervalsStats = pd.DataFrame(columns=np.arange(600))
+        intradayStats = pd.DataFrame(columns=np.arange(600))
+    intradayStats.index.rename('date', inplace=True)
 
     #For each file-data, extract the basic stats, and add them to the df
     for fileData in filesData:
-        date = getSleepDate(fileData)
-        fileData['time'] = [x.strftime("%H:%M") for x in fileData['datetime'].dt.time]
-        fileData.set_index(['time'], inplace=True)
-        intervalsStats.loc[date] = fileData['value']
+        data = fileData.copy(deep=True)
+        date = getSleepDate(data)
+        data['time'] = [x.strftime("%H:%M") for x in data['datetime'].dt.time]
+        data.set_index(['time'], inplace=True)
+        intradayStats.loc[date] = data['value']
 
-    return intervalsStats
+    return intradayStats
 
 #----------------------------#
 #    SECOND LEVEL METHODS    #
@@ -147,7 +141,7 @@ def getSleepIntervalsStats(data, minSleepIntervalRequired=0):
         #Substract one because interval indicated the minute, and starts from 1
         timeStart = data.iloc[interval[0]-1]['datetime']
         timeEnd = data.iloc[interval[1]-1]['datetime']
-        stats.loc[i] = [interval[0], interval[1], timeStart, timeEnd, interval[1] - interval[0]]
+        stats.loc[i] = [interval[0], interval[1], timeStart, timeEnd, (interval[1] - interval[0])+1]
 
     return stats
 

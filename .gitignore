@@ -23,5 +23,5 @@ local.properties
 .idea/
 
 #IPYNB
-src/test/.ipynb_checkpoints
+*.ipynb_checkpoints
 

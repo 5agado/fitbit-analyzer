@@ -41,6 +41,23 @@ class SleepStatsTestCase(unittest.TestCase):
         self.assertEqual(stats.iloc[0].name, datetime.date(2016, 3, 21))
         self.assertEqual(stats.iloc[1].name, datetime.date(2016, 3, 22))
 
+    def test_intervalsStats(self):
+        filepath =  RESOURCE_PATH + "\\unittest\\test_sleep_intervals01.csv"
+        data1 = utils.loadIntradayData(filepath)
+        filepath =  RESOURCE_PATH + "\\unittest\\test_sleep_intervals02.csv"
+        data2 = utils.loadIntradayData(filepath)
+        stats = sleepStats.generateIntervalsStats([data1, data2], 5)
+
+        print(stats.head())
+
+        self.assertEqual(stats.iloc[0][0], 5)
+        self.assertEqual(stats.iloc[0][1], 8)
+        self.assertEqual(stats.iloc[0][2], 8)
+        self.assertEqual(stats.iloc[1][0], 6)
+        self.assertEqual(stats.iloc[1][1], 5)
+        self.assertEqual(stats.iloc[1][2], 8)
+        self.assertEqual(stats.iloc[1][3], 11)
+
 
 if __name__ == '__main__':
     unittest.main()

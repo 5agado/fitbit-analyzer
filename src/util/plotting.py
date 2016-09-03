@@ -4,7 +4,7 @@ import pandas as pd
 import seaborn as sns
 from scipy import stats as scipystats
 
-from stats import sleepStats
+from stats import sleepStats, hbStats
 
 NAMES={'sleep_inefficiency':'Sleep Inefficiency (%)',
            'restless':'Restless (minutes)',
@@ -20,62 +20,85 @@ def plotPreliminaryStats(stats):
     """
     columns = ['sleep_inefficiency', 'restless', 'awake', 'total_minutes', 'sleep_hours',
                'first_min_asleep']
-    stats = stats[columns]
-    stats.rename(columns=NAMES, inplace=True)
-    #stats['to_bed_hour'] = stats['to_bed_time'].dt.hour
-    stats.hist()
+    plotStats = stats[columns]
+    plotStats = plotStats.rename(columns=NAMES)
+    plotStats.hist()
     sns.plt.show()
 
-def plotWeekdayStats(stats):
+def plotWeekdayStatsSleep(stats):
+    columns = ['sleep_inefficiency', 'restless', 'sleep_hours',
+               'first_min_asleep']
+    plotStats = stats.rename(columns=NAMES)
+    plotStats['weekday'] = plotStats.date.dt.weekday
+    plotWeekdayStats(plotStats, columns)
+
+def plotWeekdayStatsHb(stats):
+    columns = ['count', 'max', 'min', 'std']
+    plotWeekdayStats(stats, columns)
+
+def plotWeekdayStats(stats, columns):
     """
     Plot aggregated (mean) stats by dayOfWeek
     :param stats: data to plot
+    :param columns: columns from stats to plot
     """
     MEASURE_NAME = 'weekday'
     dayOfWeek={0:'Mon', 1:'Tue', 2:'Wed', 3:'Thur', 4:'Fri', 5:'Sat', 6:'Sun'}
     order = ['Mon','Tue','Wed','Thur','Fri','Sat','Sun']
-    columns = ['sleep_inefficiency', 'restless', 'awake', 'total_minutes', 'sleep_hours',
-               'first_min_asleep']
-    stats.rename(columns=NAMES, inplace=True)
-    stats[MEASURE_NAME] = stats.date.dt.dayofweek.map(dayOfWeek)
+    stats[MEASURE_NAME] = stats[MEASURE_NAME].map(dayOfWeek)
 
-    f, axes = getAxes(2,3)
+    f, axes = getAxes(2,2)
     for i, c in enumerate(columns):
-        g = sns.boxplot(x=MEASURE_NAME, y=NAMES[c], data=stats, order=order, ax=axes[i])
+        if c in NAMES:
+            c = NAMES[c]
+        g = sns.barplot(x=MEASURE_NAME, y=c, data=stats, order=order, ax=axes[i])
         g.set_xlabel('')
     sns.plt.show()
     #plot(stats, columns, MEASURE_NAME, 2, 3, order=order)
 
-def plotMonthlyStats(stats):
+def plotMonthlyStatsSleep(stats):
+    columns = ['sleep_inefficiency', 'restless', 'sleep_hours',
+               'first_min_asleep']
+    plotStats= stats.rename(columns=NAMES)
+    plotStats['month'] = plotStats.date.dt.month
+    plotMonthlyStats(plotStats, columns)
+
+def plotMonthlyStatsHb(stats):
+    columns = ['count', 'max', 'min', 'std']
+    plotMonthlyStats(stats, columns)
+    #plot(stats, columns, MEASURE_NAME, 4, 1, order=order)
+
+def plotMonthlyStats(stats, columns):
     """
     Plot aggregated (mean) stats by month
     :param stats: data to plot
+    :param columns: columns from stats to plot
     """
     MEASURE_NAME = 'month'
     months={1:'Jan', 2:'Feb', 3:'Mar', 4:'Apr', 5:'May', 6:'Jun', 7:'Jul', 8:'Aug',
             9:'Sep', 10:'Oct', 11:'Nov', 12:'Dec'}
     order = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-    columns = ['sleep_inefficiency', 'restless', 'sleep_hours',
-               'first_min_asleep']
-    stats.rename(columns=NAMES, inplace=True)
-    stats[MEASURE_NAME] = stats.date.dt.month.map(months)
+    stats[MEASURE_NAME] = stats[MEASURE_NAME].map(months)
+
     order = [m for m in order if m in stats[MEASURE_NAME].unique()]
 
     f, axes = getAxes(2,2)
     for i, c in enumerate(columns):
-        g = sns.boxplot(x=MEASURE_NAME, y=NAMES[c], data=stats, order=order, ax=axes[i])
+        if c in NAMES:
+            c = NAMES[c]
+        g = sns.barplot(x=MEASURE_NAME, y=c, data=stats, order=order, ax=axes[i])
         g.set_xlabel('')
     sns.plt.show()
     #plot(stats, columns, MEASURE_NAME, 4, 1, order=order)
 
-def plotDailyStats(stats):
+def plotDailyStatsSleep(data):
     """
     Plot daily stats. Fill all data range, and put NaN for days without measures
-    :param stats: data to plot
+    :param data: data to plot
     """
     MEASURE_NAME = 'date'
     columns = ['sleep_inefficiency', 'sleep_hours']
-    stats.rename(columns=NAMES, inplace=True)
+    stats = data.rename(columns=NAMES)
 
     dates = pd.date_range(start=stats.date.iloc[0].date(), end=stats.date.iloc[-1].date())
     stats.set_index(['date'], inplace=True)
@@ -87,7 +110,7 @@ def plotDailyStats(stats):
     #values = stats[measure]-stats[measure].mean()
 
     f, axes = getAxes(2,1)
-    xTicksDiv = 10
+    xTicksDiv = min(10, len(stats))
     #xticks = [(x-pd.DateOffset(years=1, day=2)).date() for x in stats.date]
     xticks = [x.date() for x in stats.date]
     keptticks = xticks[::int(len(xticks)/xTicksDiv)]
@@ -101,18 +124,33 @@ def plotDailyStats(stats):
     sns.plt.show()
     #plot(stats, columns, MEASURE_NAME, 4, 1)
 
+def plotDailyStatsHb(data):
+    data.groupby(data[hbStats.NAME_DT_COL].dt.date).mean().plot()
+    sns.plt.show()
+
+def plotYearMonthStatsHb(data):
+    #pd.groupby(b,by=[b.index.month,b.index.year])
+    data.groupby(pd.TimeGrouper(freq='M')).mean().plot()
+    sns.plt.show()
+
 def plotSleepValueHeatmap(intradayStats, sleepValue=1):
     data = intradayStats.apply(pd.value_counts)
+    sns.set_context("poster")
+    sns.set_style("darkgrid")
 
-    xTicksDiv = 15
+    xTicksDiv = 20
+    #stepSize = int(len(xticks)/xTicksDiv)
+    stepSize = 60
     xticks = [x for x in data.columns.values]
-    keptticks = xticks[::int(len(xticks)/xTicksDiv)]
+    keptticks = xticks[::stepSize]
     xticks = ['' for _ in xticks]
-    xticks[::int(len(xticks)/xTicksDiv)] = keptticks
+    xticks[::stepSize] = keptticks
+    plt.figure(figsize=(16, 4.2))
     g = sns.heatmap(data.loc[sleepValue].reshape(1,-1))
     g.set_xticklabels(xticks, rotation=45)
     g.set_yticklabels([])
     g.set_ylabel(sleepStats.SLEEP_VALUES[sleepValue])
+    plt.tight_layout()
     sns.plt.show()
 
 def plotCorrelation(stats):
@@ -146,5 +184,5 @@ def plot(data, columns, measureName, nrows, ncols, order=None):
     f, axes = plt.subplots(nrows=nrows, ncols=ncols)
     axes = axes.reshape(-1)
     for i, c in enumerate(columns):
-        sns.boxplot(x=measureName, y=c, data=data, order=order, ax=axes[i])
+        sns.barplot(x=measureName, y=c, data=data, order=order, ax=axes[i])
     sns.plt.show()
