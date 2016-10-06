@@ -15,26 +15,34 @@ I have to admit that this ended up to be easier and cleaner that the previous sc
 2. Seems like the API have a limit of 150 calls per hour, so you might need to repeat the operation several times depending on how much and what data you need
 
 ###Data Format
-All this said, in this repository I am not sharing the scraper code, but in the *util* folder you can find some code for loading sleep, heart-beat and steps data as provided by the previously mentioned procedure. 
+All this said, in this repository I am not sharing the scraper code, but in the *util* folder you can find some code for loading sleep, heartbeat and steps data as provided by the previously mentioned procedure. 
 For the data-dump folder I have one folder per year, and then one sub-folder for each day, in which the different files are generated (e.g. *sleep.json*, *steps.json*).
 
 ##Sleep Stats
 Sleep values are mapped like this: 0=none (no measure taken), 1=sleeping, 2=restless, 3=awake.
 
-* **Basic Stats** (sleep values count, sleep efficiency, hours of sleep, total minutes in bed)
+* **Basic Stats** (sleep values count, sleep efficiency, hours of sleep, total minutes in bed, N max-values for each stat)
 * **Timing Stats** (first minute asleep, to bed time, wake up time, sleep interval min/max length)
-* **Intraday Stats** minute to minute report for each day, for the specified sleep values
 * **Intervals Stats** for each day all the sleep intervals lengths
+* **Intraday Stats** minute to minute report for each day, for the specified sleep values. Total value count, with normalization and centering on specific time.
 
 
-##Heart Beat Stats
+##Heart Rate Stats
 * **Basic Stats** (count, mean, min, max, std) values for the entire dataset, or for aggregated subsets. Common aggregation features are date, year, month, day, day of week and hour  
 * **Daily Stats** plotting of average hb by day
 * **Min/Max Values** get the N min or max heartbeat values in the dataset
 
+##Steps Stats
+* **Daily Count** steps count per day
+
+##Combined Stats
+* **Correlation** correlation coefficient between pairs of stats (e.g. steps and sleep)
+
 ##TODO
+* increase/decrease percentage of last day/week/month
+* wake up and to bed times as integer (hour + minutes)
 * proper testing of current sleep stats
-* derive sleep-states (REM/NREM) stats (e.g. identify, how long in each) from basic ones, or via correlation with heart-beat (as for now doesn't seem to be feasible actual ECG is still the more proper option)
+* derive sleep-states (REM/NREM) stats (e.g. identify, how long in each) from basic ones, or via correlation with heartbeat (as for now doesn't seem to be feasible actual ECG is still the more proper option)
 
 ## License
 

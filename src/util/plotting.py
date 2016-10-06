@@ -89,7 +89,20 @@ def plotMonthlyStats(stats, columns):
         g = sns.barplot(x=MEASURE_NAME, y=c, data=stats, order=order, ax=axes[i])
         g.set_xlabel('')
     sns.plt.show()
-    #plot(stats, columns, MEASURE_NAME, 4, 1, order=order)
+
+def plotYearAndMonthStatsSleep(stats):
+    columns = ['sleep_inefficiency', 'sleep_hours']
+    #plotStats= stats.rename(columns=NAMES)
+    _plotYearAndMonthStats(stats, columns)
+
+def _plotYearAndMonthStats(stats, columns):
+    dataToPlot = stats[columns]
+    dataToPlot = dataToPlot.groupby(stats['date'].dt.to_period("M")).mean()
+    dataToPlot = pd.melt(dataToPlot.reset_index(), id_vars=['date'], value_vars=columns,
+                         var_name='stats', value_name='val')
+    g = sns.factorplot(data=dataToPlot, x="date", y="val", col="stats", kind="bar", sharey=False)
+    g.set_xticklabels(rotation=45)
+    sns.plt.show()
 
 def plotDailyStatsSleep(data):
     """
@@ -117,12 +130,11 @@ def plotDailyStatsSleep(data):
     xticks = ['' for _ in xticks]
     xticks[::int(len(xticks)/xTicksDiv)] = keptticks
     for i, c in enumerate(columns):
-        g =sns.barplot(x=MEASURE_NAME, y=NAMES[c], data=stats, ax=axes[i])
+        g =sns.pointplot(x=MEASURE_NAME, y=NAMES[c], data=stats, ax=axes[i])
         g.set_xticklabels([])
         g.set_xlabel('')
     g.set_xticklabels(xticks, rotation=45)
     sns.plt.show()
-    #plot(stats, columns, MEASURE_NAME, 4, 1)
 
 def plotDailyStatsHb(data):
     data.groupby(data[hbStats.NAME_DT_COL].dt.date).mean().plot()
@@ -134,19 +146,18 @@ def plotYearMonthStatsHb(data):
     sns.plt.show()
 
 def plotSleepValueHeatmap(intradayStats, sleepValue=1):
-    data = intradayStats.apply(pd.value_counts)
     sns.set_context("poster")
     sns.set_style("darkgrid")
 
     xTicksDiv = 20
     #stepSize = int(len(xticks)/xTicksDiv)
     stepSize = 60
-    xticks = [x for x in data.columns.values]
+    xticks = [x for x in intradayStats.columns.values]
     keptticks = xticks[::stepSize]
     xticks = ['' for _ in xticks]
     xticks[::stepSize] = keptticks
     plt.figure(figsize=(16, 4.2))
-    g = sns.heatmap(data.loc[sleepValue].reshape(1,-1))
+    g = sns.heatmap(intradayStats.loc[sleepValue].reshape(1,-1), cmap='Greens')
     g.set_xticklabels(xticks, rotation=45)
     g.set_yticklabels([])
     g.set_ylabel(sleepStats.SLEEP_VALUES[sleepValue])

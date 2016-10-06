@@ -24,4 +24,5 @@ local.properties
 
 #IPYNB
 *.ipynb_checkpoints
+src/test/devTesting.ipynb
 

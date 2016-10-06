@@ -22,8 +22,9 @@ STATS_NAME_INTRADAY = 'intradayStats'
 
 def generateStatsFrom(data, statsType, **kwargs):
     """
-
-    :param data: sleep data. As for now a list of dataframes, one for each date
+    Generic method for stats generation.
+    :param data: sleep data. List of dataframes, one for each day
+    :param statsType: name of the stat to be generated
     :return:
     """
 
@@ -130,6 +131,22 @@ def generateIntradayStats(filesData, useTime=True):
 #    SECOND LEVEL METHODS    #
 #----------------------------#
 
+def normalizedIntradayCountStats(intradayStats, limitCount=5):
+    # For each minute number of of days for which we have a valid measure
+    notNullCount = intradayStats.count()
+    # TODO validate this
+    notNullCount[notNullCount < limitCount] = None
+    # Count how many times each value appears for each minute
+    valueCount = intradayStats.apply(pd.value_counts)
+    res = valueCount.div(notNullCount, axis=1)
+    return res
+
+def centerIntradayCountStats(intradayCountStats, timeToCenterOn="12:00"):
+    columns = list(intradayCountStats.columns.values)
+    k = columns.index(timeToCenterOn)
+    columns = columns[k:] + columns[:k]
+    return intradayCountStats[columns]
+
 def getSleepIntervalsStats(data, minSleepIntervalRequired=0):
     sleepIntervals = getSleepIntervals(data, minSleepIntervalRequired)
 
@@ -182,6 +199,9 @@ def getSleepIntervals(data, minSleepIntervalRequired=0):
         prev = split
 
     return intervals
+
+def getMaxValues(basicStats, n, statName):
+    return basicStats.nlargest(n, statName)[statName]
 
 
 
