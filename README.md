@@ -41,7 +41,6 @@ Sleep values are mapped like this: 0=none (no measure taken), 1=sleeping, 2=rest
 ##TODO
 * increase/decrease percentage of last day/week/month
 * wake up and to bed times as integer (hour + minutes)
-* proper testing of current sleep stats
 * derive sleep-states (REM/NREM) stats (e.g. identify, how long in each) from basic ones, or via correlation with heartbeat (as for now doesn't seem to be feasible actual ECG is still the more proper option)
 
 ## License

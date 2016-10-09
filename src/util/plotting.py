@@ -28,78 +28,116 @@ def plotPreliminaryStats(stats):
 def plotWeekdayStatsSleep(stats):
     columns = ['sleep_inefficiency', 'restless', 'sleep_hours',
                'first_min_asleep']
-    plotStats = stats.rename(columns=NAMES)
-    plotStats['weekday'] = plotStats.date.dt.weekday
-    plotWeekdayStats(plotStats, columns)
+    _plotWeekdayStats(stats, columns)
 
 def plotWeekdayStatsHb(stats):
     columns = ['count', 'max', 'min', 'std']
-    plotWeekdayStats(stats, columns)
+    _plotWeekdayStats(stats, columns)
 
-def plotWeekdayStats(stats, columns):
-    """
-    Plot aggregated (mean) stats by dayOfWeek
-    :param stats: data to plot
-    :param columns: columns from stats to plot
-    """
-    MEASURE_NAME = 'weekday'
-    dayOfWeek={0:'Mon', 1:'Tue', 2:'Wed', 3:'Thur', 4:'Fri', 5:'Sat', 6:'Sun'}
-    order = ['Mon','Tue','Wed','Thur','Fri','Sat','Sun']
-    stats[MEASURE_NAME] = stats[MEASURE_NAME].map(dayOfWeek)
+def _plotWeekdayStats(stats, columns):
+    dayOfWeek = {0: 'Mon', 1: 'Tue', 2: 'Wed', 3: 'Thur', 4: 'Fri', 5: 'Sat', 6: 'Sun'}
+    order = ['Mon', 'Tue', 'Wed', 'Thur', 'Fri', 'Sat', 'Sun']
 
-    f, axes = getAxes(2,2)
-    for i, c in enumerate(columns):
-        if c in NAMES:
-            c = NAMES[c]
-        g = sns.barplot(x=MEASURE_NAME, y=c, data=stats, order=order, ax=axes[i])
-        g.set_xlabel('')
+    # Group by weekday and change stats from columns to row attribute
+    dataToPlot = stats.groupby(stats['date'].dt.weekday).mean()
+    dataToPlot = pd.melt(dataToPlot.reset_index(), id_vars=['date'], value_vars=columns,
+                         var_name='stats', value_name='val')
+    # Rename stats and weekdays
+    dataToPlot['stats'].replace(NAMES, inplace=True)
+    dataToPlot['date'].replace(dayOfWeek, inplace=True)
+    # Plot
+    g = sns.factorplot(data=dataToPlot, x="date", y="val", col="stats", order=order, kind="bar", sharey=False)
+    g.set_xticklabels(rotation=45)
+    g.set(xlabel='')
     sns.plt.show()
-    #plot(stats, columns, MEASURE_NAME, 2, 3, order=order)
+
+# def plotWeekdayStats(stats, columns):
+#     """
+#     Plot aggregated (mean) stats by dayOfWeek
+#     :param stats: data to plot
+#     :param columns: columns from stats to plot
+#     """
+#     MEASURE_NAME = 'weekday'
+#     dayOfWeek={0:'Mon', 1:'Tue', 2:'Wed', 3:'Thur', 4:'Fri', 5:'Sat', 6:'Sun'}
+#     order = ['Mon','Tue','Wed','Thur','Fri','Sat','Sun']
+#     stats[MEASURE_NAME] = stats[MEASURE_NAME].map(dayOfWeek)
+#
+#     f, axes = getAxes(2,2)
+#     for i, c in enumerate(columns):
+#         if c in NAMES:
+#             c = NAMES[c]
+#         g = sns.barplot(x=MEASURE_NAME, y=c, data=stats, order=order, ax=axes[i])
+#         g.set_xlabel('')
+#     sns.plt.show()
+#     #plot(stats, columns, MEASURE_NAME, 2, 3, order=order)
 
 def plotMonthlyStatsSleep(stats):
     columns = ['sleep_inefficiency', 'restless', 'sleep_hours',
                'first_min_asleep']
-    plotStats= stats.rename(columns=NAMES)
-    plotStats['month'] = plotStats.date.dt.month
-    plotMonthlyStats(plotStats, columns)
+    _plotMonthlyStats(stats, columns)
 
 def plotMonthlyStatsHb(stats):
     columns = ['count', 'max', 'min', 'std']
-    plotMonthlyStats(stats, columns)
+    _plotMonthlyStats(stats, columns)
     #plot(stats, columns, MEASURE_NAME, 4, 1, order=order)
 
-def plotMonthlyStats(stats, columns):
-    """
-    Plot aggregated (mean) stats by month
-    :param stats: data to plot
-    :param columns: columns from stats to plot
-    """
-    MEASURE_NAME = 'month'
+def _plotMonthlyStats(stats, columns):
     months={1:'Jan', 2:'Feb', 3:'Mar', 4:'Apr', 5:'May', 6:'Jun', 7:'Jul', 8:'Aug',
             9:'Sep', 10:'Oct', 11:'Nov', 12:'Dec'}
     order = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-    stats[MEASURE_NAME] = stats[MEASURE_NAME].map(months)
 
-    order = [m for m in order if m in stats[MEASURE_NAME].unique()]
-
-    f, axes = getAxes(2,2)
-    for i, c in enumerate(columns):
-        if c in NAMES:
-            c = NAMES[c]
-        g = sns.barplot(x=MEASURE_NAME, y=c, data=stats, order=order, ax=axes[i])
-        g.set_xlabel('')
+    # Group by month and change stats from columns to row attribute
+    dataToPlot = stats.groupby(stats['date'].dt.month).mean()
+    dataToPlot = pd.melt(dataToPlot.reset_index(), id_vars=['date'], value_vars=columns,
+                         var_name='stats', value_name='val')
+    # Rename stats and weekdays
+    dataToPlot['stats'].replace(NAMES, inplace=True)
+    dataToPlot['date'].replace(months, inplace=True)
+    order = [m for m in order if m in dataToPlot['date'].unique()]
+    # Plot
+    g = sns.factorplot(data=dataToPlot, x="date", y="val", col="stats", order=order, kind="bar", sharey=False)
+    g.set_xticklabels(rotation=45)
+    g.set(xlabel='')
     sns.plt.show()
 
+# def _plotMonthlyStats(stats, columns):
+#     """
+#     Plot aggregated (mean) stats by month
+#     :param stats: data to plot
+#     :param columns: columns from stats to plot
+#     """
+#     MEASURE_NAME = 'month'
+#     months={1:'Jan', 2:'Feb', 3:'Mar', 4:'Apr', 5:'May', 6:'Jun', 7:'Jul', 8:'Aug',
+#             9:'Sep', 10:'Oct', 11:'Nov', 12:'Dec'}
+#     order = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+#     stats[MEASURE_NAME] = stats[MEASURE_NAME].map(months)
+#
+#     order = [m for m in order if m in stats[MEASURE_NAME].unique()]
+#
+#     f, axes = getAxes(2,2)
+#     for i, c in enumerate(columns):
+#         if c in NAMES:
+#             c = NAMES[c]
+#         g = sns.barplot(x=MEASURE_NAME, y=c, data=stats, order=order, ax=axes[i])
+#         g.set_xlabel('')
+#     sns.plt.show()
+
 def plotYearAndMonthStatsSleep(stats):
+    """
+    Plot aggregated (mean) stats by year and month.
+    :param stats: data to plot
+    """
     columns = ['sleep_inefficiency', 'sleep_hours']
-    #plotStats= stats.rename(columns=NAMES)
     _plotYearAndMonthStats(stats, columns)
 
 def _plotYearAndMonthStats(stats, columns):
-    dataToPlot = stats[columns]
-    dataToPlot = dataToPlot.groupby(stats['date'].dt.to_period("M")).mean()
+    # Group by month and change stats from columns to row attribute
+    dataToPlot = stats.groupby(stats['date'].dt.to_period("M")).mean()
     dataToPlot = pd.melt(dataToPlot.reset_index(), id_vars=['date'], value_vars=columns,
                          var_name='stats', value_name='val')
+    # Rename stats
+    dataToPlot['stats'].replace(NAMES, inplace=True)
+    # Plot
     g = sns.factorplot(data=dataToPlot, x="date", y="val", col="stats", kind="bar", sharey=False)
     g.set_xticklabels(rotation=45)
     sns.plt.show()
@@ -118,9 +156,6 @@ def plotDailyStatsSleep(data):
     stats = stats.reindex(dates)
     stats.reset_index(inplace=True)
     stats.rename(columns={'index':'date'}, inplace=True)
-
-    #measure = 'sleeping'
-    #values = stats[measure]-stats[measure].mean()
 
     f, axes = getAxes(2,1)
     xTicksDiv = min(10, len(stats))

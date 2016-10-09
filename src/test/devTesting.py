@@ -28,14 +28,6 @@ def main(_):
     args = parser.parse_args()
     dataFolder = args.dataFolder
 
-    intradayStats = pd.read_csv(dataFolder + "\\..\\intradayStats.csv")
-    intradayStats.drop("date", axis=1, inplace=True)
-    data = intradayStats.apply(pd.value_counts)
-    #data = data.loc[1].reshape(1,-1)
-    data = data.drop(data.index[[1,2]])
-    print(data.columns.values)
-    print(data.loc[1])
-
     trace = go.Scatter3d(
         x=pd.Series(data.columns.values), y=pd.Series(np.ones(len(data.columns.values))), z=data.loc[1],
         marker=dict(
@@ -95,13 +87,7 @@ def main(_):
     fig = go.Figure(data=data, layout=layout)
     plotly.offline.plot(fig)
 
-    return
-
     #todo, use facetgrid??, write down considerations
-    #todo use smoothing for this one, try interpolation for missing values
-    #better print just one or two stats
-    #there should be no mean
-
     return
 
 if __name__ == "__main__":
