@@ -27,8 +27,12 @@ def loadSleepData(dumpDir):
             return None
         date = datetime.datetime.strptime(sleeps[0]['dateOfSleep'], "%Y-%m-%d").date()
         if len(sleeps)>1:
-            logger.info("There are more than one sleep for {}, taking just the first".format(date))
-        intradayData = sleeps[0]['minuteData']
+            logger.info("There are {} sleep records for {}, taking main sleep".format(len(sleeps), date))
+        intradayData = None
+        for sleep in sleeps:
+            if sleep['isMainSleep']:
+                intradayData = sleep['minuteData']
+                break
         dayToSubstract = datetime.timedelta(days=1)
         df = pd.read_json(json.dumps(intradayData), convert_dates=['time'])
         if (df['value']==SLEEP_VALUE_NONE).all():
@@ -78,10 +82,15 @@ def loadHBSummaryData(dumpDir):
         if len(summaryData)!=1:
             logger.info("There are {} heart data entries for {}".format(len(summaryData), date))
 
-        restingHeartRate = summaryData[0]['restingHeartRate']
+        try:
+            restingHeartRate = summaryData[0]['value']['restingHeartRate']
+        except KeyError:
+            logger.info("No resting heart rate info for {}".format(date))
+            return None
         return date, restingHeartRate
 
-    return _loadData(dumpDir, 'heartbeat', loadFun)
+    entries = _loadData(dumpDir, 'heartbeat', loadFun)
+    return pd.DataFrame(entries, columns=['date', 'rhr'])
 
 def loadStepsData(dumpDir):
     """
@@ -119,7 +128,7 @@ def loadTotalSteps(dumpDir):
         return date, totalSteps
 
     entries = _loadData(dumpDir, 'steps', loadFun)
-    return pd.DataFrame(entries, columns=['datetime', 'value']).set_index(['datetime'])
+    return pd.DataFrame(entries, columns=['date', 'steps']).set_index(['date'])
 
 def _loadData(dumpDir, dataType, loadFun):
     """

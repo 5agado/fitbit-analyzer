@@ -36,11 +36,10 @@ Sleep values are mapped like this: 0=none (no measure taken), 1=sleeping, 2=rest
 * **Daily Count** steps count per day
 
 ##Combined Stats
-* **Correlation** correlation coefficient between pairs of stats (e.g. steps and sleep)
+* **Correlation** correlation coefficient between heterogeneous stats (e.g. steps and sleep)
 
 ##TODO
-* increase/decrease percentage of last day/week/month
-* wake up and to bed times as integer (hour + minutes)
+* hour stats by weekday
 * derive sleep-states (REM/NREM) stats (e.g. identify, how long in each) from basic ones, or via correlation with heartbeat (as for now doesn't seem to be feasible actual ECG is still the more proper option)
 
 ## License

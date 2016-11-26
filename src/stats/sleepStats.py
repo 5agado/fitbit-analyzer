@@ -61,10 +61,8 @@ def generateBasicStats(filesData):
     basicStats = basicStats.fillna(0).astype(int)
     basicStats['sleep_efficiency'] = (basicStats[SleepValue.sleeping.value]/basicStats['total_minutes'])*100
     basicStats['sleep_inefficiency'] = (basicStats['sleep_efficiency']-100).abs()
-    basicStats['sleep_hours'] = (basicStats[SleepValue.sleeping.value]/60).astype(int) \
-                                + (basicStats[SleepValue.sleeping.value]%60)/100
-    basicStats['total_hours'] = (basicStats['total_minutes']/60).astype(int) \
-                                + (basicStats['total_minutes']%60)/100
+    basicStats['sleep_hours'] = (basicStats[SleepValue.sleeping.value]/60)
+    basicStats['total_hours'] = basicStats['total_minutes']/60
 
     #Rename columns
     columns = SLEEP_VALUES
@@ -132,12 +130,13 @@ def generateIntradayStats(filesData, useTime=True):
 #----------------------------#
 
 def normalizedIntradayCountStats(intradayStats, limitCount=5):
-    # For each minute number of of days for which we have a valid measure
+    # For each minute, number of days for which we have a valid measure (record)
     notNullCount = intradayStats.count()
-    # TODO validate this
+    # Ignore minutes where we have low level of records
     notNullCount[notNullCount < limitCount] = None
     # Count how many times each value appears for each minute
     valueCount = intradayStats.apply(pd.value_counts)
+    # Normalize each minute by records count
     res = valueCount.div(notNullCount, axis=1)
     return res
 

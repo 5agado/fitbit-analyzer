@@ -7,6 +7,7 @@ from scipy import stats as scipystats
 from stats import sleepStats, hbStats
 
 NAMES={'sleep_inefficiency':'Sleep Inefficiency (%)',
+        'sleep_efficiency':'Sleep Efficiency (%)',
            'restless':'Restless (minutes)',
            'awake':'Awake (minutes)',
            'total_minutes':'Total Minutes',
@@ -18,7 +19,7 @@ def plotPreliminaryStats(stats):
     Plot measures distribution using histograms
     :param stats: data to plot
     """
-    columns = ['sleep_inefficiency', 'restless', 'awake', 'total_minutes', 'sleep_hours',
+    columns = ['sleep_efficiency', 'restless', 'awake', 'total_minutes', 'sleep_hours',
                'first_min_asleep']
     plotStats = stats[columns]
     plotStats = plotStats.rename(columns=NAMES)
@@ -26,8 +27,8 @@ def plotPreliminaryStats(stats):
     sns.plt.show()
 
 def plotWeekdayStatsSleep(stats):
-    columns = ['sleep_inefficiency', 'restless', 'sleep_hours',
-               'first_min_asleep']
+    columns = ['sleep_efficiency', 'restless', 'sleep_hours',
+               'first_min_asleep', 'awake', 'total_minutes']
     _plotWeekdayStats(stats, columns)
 
 def plotWeekdayStatsHb(stats):
@@ -46,9 +47,31 @@ def _plotWeekdayStats(stats, columns):
     dataToPlot['stats'].replace(NAMES, inplace=True)
     dataToPlot['date'].replace(dayOfWeek, inplace=True)
     # Plot
-    g = sns.factorplot(data=dataToPlot, x="date", y="val", col="stats", order=order, kind="bar", sharey=False)
+    g = sns.factorplot(data=dataToPlot, x="date", y="val", col="stats",
+                       order=order, kind="point", sharey=False, col_wrap=3)
     g.set_xticklabels(rotation=45)
     g.set(xlabel='')
+    sns.plt.show()
+
+def plotWeekdayStatsByMonthSleep(stats):
+    stat_name = 'sleep_efficiency'
+    _plotWeekdayByMonthStats(stats, stat_name)
+
+def _plotWeekdayByMonthStats(stats, stat_name):
+    dayOfWeek = {0: 'Mon', 1: 'Tue', 2: 'Wed', 3: 'Thur', 4: 'Fri', 5: 'Sat', 6: 'Sun'}
+    order = ['Mon', 'Tue', 'Wed', 'Thur', 'Fri', 'Sat', 'Sun']
+
+    # Add day and month columns, and groupby
+    stats['day'] = stats['date'].dt.weekday
+    stats['month'] = stats['date'].dt.month
+    dataToPlot = stats.groupby([stats['day'], stats['month']])[stat_name].mean()
+
+    dataToPlot = dataToPlot.reset_index()
+    dataToPlot['day'].replace(dayOfWeek, inplace=True)
+    # Plot
+    g = sns.pointplot(data=dataToPlot, x="day", y="sleep_efficiency", hue="month", order=order)
+    g.set(xlabel='')
+    g.set_ylabel(NAMES[stat_name])
     sns.plt.show()
 
 # def plotWeekdayStats(stats, columns):
@@ -127,7 +150,7 @@ def plotYearAndMonthStatsSleep(stats):
     Plot aggregated (mean) stats by year and month.
     :param stats: data to plot
     """
-    columns = ['sleep_inefficiency', 'sleep_hours']
+    columns = ['sleep_efficiency', 'sleep_hours']
     _plotYearAndMonthStats(stats, columns)
 
 def _plotYearAndMonthStats(stats, columns):
@@ -138,8 +161,10 @@ def _plotYearAndMonthStats(stats, columns):
     # Rename stats
     dataToPlot['stats'].replace(NAMES, inplace=True)
     # Plot
-    g = sns.factorplot(data=dataToPlot, x="date", y="val", col="stats", kind="bar", sharey=False)
+    g = sns.factorplot(data=dataToPlot, x="date", y="val", row="stats", kind="point", sharey=False)
     g.set_xticklabels(rotation=45)
+    for ax in g.axes.flat:
+        ax.grid(b=True)
     sns.plt.show()
 
 def plotDailyStatsSleep(data):
@@ -192,7 +217,7 @@ def plotSleepValueHeatmap(intradayStats, sleepValue=1):
     xticks = ['' for _ in xticks]
     xticks[::stepSize] = keptticks
     plt.figure(figsize=(16, 4.2))
-    g = sns.heatmap(intradayStats.loc[sleepValue].reshape(1,-1), cmap='Greens')
+    g = sns.heatmap(intradayStats.loc[sleepValue].reshape(1,-1))
     g.set_xticklabels(xticks, rotation=45)
     g.set_yticklabels([])
     g.set_ylabel(sleepStats.SLEEP_VALUES[sleepValue])
@@ -200,18 +225,18 @@ def plotSleepValueHeatmap(intradayStats, sleepValue=1):
     sns.plt.show()
 
 def plotCorrelation(stats):
-    columnsToDrop = ['sleep_interval_max_len', 'sleep_interval_min_len',
-                     'sleep_interval_avg_len', 'sleep_inefficiency',
-                     'sleep_hours', 'total_hours']
+    #columnsToDrop = ['sleep_interval_max_len', 'sleep_interval_min_len',
+    #                 'sleep_interval_avg_len', 'sleep_inefficiency',
+    #                 'sleep_hours', 'total_hours']
 
-    stats = stats.drop(columnsToDrop, axis=1)
+    #stats = stats.drop(columnsToDrop, axis=1)
 
     g = sns.PairGrid(stats)
     def corrfunc(x, y, **kws):
         r, p = scipystats.pearsonr(x, y)
         ax = plt.gca()
         ax.annotate("r = {:.2f}".format(r),xy=(.1, .9), xycoords=ax.transAxes)
-        #ax.annotate("p = {:.2f}".format(p),xy=(.2, .8), xycoords=ax.transAxes)
+        ax.annotate("p = {:.2f}".format(p),xy=(.2, .8), xycoords=ax.transAxes)
         if p>0.04:
             ax.patch.set_alpha(0.1)
 

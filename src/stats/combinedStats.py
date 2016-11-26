@@ -19,4 +19,12 @@ def normalize(row):
     return row - row.mean()
 
 def timeToInt(time):
-    return (time.hour*60) + time.minute
+    hour = time.hour
+    return (hour * 60) + time.minute
+
+def pivotedTimeToInt(time, pivot, max_val=23):
+    hour = time.hour
+    if hour >= pivot:
+        return ((hour - pivot) * 60) + time.minute
+    else:
+        return ((max_val - (pivot - hour) ) * 60) + time.minute
