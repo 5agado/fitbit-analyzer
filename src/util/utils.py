@@ -16,7 +16,7 @@ def loadIntradayData(filepath):
 def loadSleepData(dumpDir):
     """
     Load sleep data from dumping done using the official Fitbit API.
-    Check README file for further info
+    Check README file for further info on the scraping process and saved format
     :param dumpDir: the folder where the date has been dumped
     :return: a list of dataframes, one for each day, containing the intraday sleep data
     """
@@ -46,33 +46,38 @@ def loadSleepData(dumpDir):
 
     return _loadData(dumpDir, 'sleep', loadFun)
 
-def loadHBData(dumpDir):
+def loadHBData(dumpDir, concat=False):
     """
     Load heart-rate data from dumping done using the official Fitbit API.
-    Check README file for further info
+    Check README file for further info on the scraping process and saved format
+    :param concat: specify when to concat all entries in a single dataframe
     :param dumpDir: the folder where the date has been dumped
-    :return: a list of dataframes, one for each day, containing the intraday heart-rate data
+    :return: a list of dataframes, one for each day, containing the intraday heart-rate data.
+            or a single one, if concat is set to True.
     """
     def loadFun(jsonData):
         summaryData = jsonData['activities-heart']
-        date = datetime.datetime.strptime(summaryData[0]['dateTime'], "%Y-%m-%d").date()
+        date = summaryData[0]['dateTime']
         if len(summaryData)!=1:
             logger.info("There are {} heart data entries for {}".format(len(summaryData), date))
         intradayData = jsonData['activities-heart-intraday']['dataset']
         if not intradayData:
             return None
-        df = pd.read_json(json.dumps(intradayData), convert_dates=['time'])
-        df['datetime'] = df.apply(lambda x: datetime.datetime.combine(date, x['time'].time()), axis=1)
+        df = pd.read_json(json.dumps(intradayData))
+        df['datetime'] = pd.to_datetime(date + ' ' + df['time'])
         df.drop('time', inplace=True, axis=1)
         return df
 
-    return _loadData(dumpDir, 'heartbeat', loadFun)
+    if concat:
+        return pd.concat(_loadData(dumpDir, 'heartbeat', loadFun), ignore_index=True)
+    else:
+        return _loadData(dumpDir, 'heartbeat', loadFun)
 
 # TODO load heartRateZones data
 def loadHBSummaryData(dumpDir):
     """
     Load heart-rate summary data from dumping done using the official Fitbit API.
-    Check README file for further info
+    Check README file for further info on the scraping process and saved format
     :param dumpDir: the folder where the date has been dumped
     :return: a list of tuples, one for each day, containing summary heart-rate info
     """
@@ -90,22 +95,22 @@ def loadHBSummaryData(dumpDir):
         return date, restingHeartRate
 
     entries = _loadData(dumpDir, 'heartbeat', loadFun)
-    return pd.DataFrame(entries, columns=['date', 'rhr'])
+    return pd.DataFrame(entries, columns=['date', 'rhr']).set_index(['date'])
 
 def loadStepsData(dumpDir):
     """
     Load steps data from dumping done using the official Fitbit API.
-    Check README file for further info
+    Check README file for further info on the scraping process and saved format
     :param dumpDir: the folder where the date has been dumped
     :return: a list of dataframes, one for each day, containing the intraday steps data
     """
     def loadFun(jsonData):
         intradayData = jsonData['activities-steps-intraday']['dataset']
-        date = datetime.datetime.strptime(jsonData['activities-steps'][0]['dateTime'], "%Y-%m-%d").date()
+        date = jsonData['activities-steps'][0]['dateTime']
         if not intradayData:
             return None
-        df = pd.read_json(json.dumps(intradayData), convert_dates=['time'])
-        df['datetime'] = df.apply(lambda x: datetime.datetime.combine(date, x['time'].time()), axis=1)
+        df = pd.read_json(json.dumps(intradayData))
+        df['datetime'] = pd.to_datetime(date + ' ' + df['time'])
         df.drop('time', inplace=True, axis=1)
         return df
 
@@ -114,7 +119,7 @@ def loadStepsData(dumpDir):
 def loadTotalSteps(dumpDir):
     """
     Load total steps count from dumping done using the official Fitbit API.
-    Check README file for further info
+    Check README file for further info on the scraping process and saved format
     :param dumpDir: the folder where the date has been dumped
     :return: a dataframe containing the total steps count indexed by day
     """
@@ -130,6 +135,7 @@ def loadTotalSteps(dumpDir):
     entries = _loadData(dumpDir, 'steps', loadFun)
     return pd.DataFrame(entries, columns=['date', 'steps']).set_index(['date'])
 
+#TODO maybe better to return a dictionary? Or for some types it will not work
 def _loadData(dumpDir, dataType, loadFun):
     """
     Helper method.
@@ -138,7 +144,7 @@ def _loadData(dumpDir, dataType, loadFun):
     :param dumpDir: the folder where the date has been dumped
     :param dataType: the type of data to be loaded, equivalent to the name of the corresponding file
     :param loadFun: function defining the procedure for the data loading
-    :return: a list of objects had defined in loadFun
+    :return: a list of objects as defined in loadFun
     """
     data = []
     # First level should be the year
@@ -148,15 +154,43 @@ def _loadData(dumpDir, dataType, loadFun):
         dates = getAllSubDirsNamesOf(year)
         for date in dates:
             # Dumped files are named <dataType>.json
-            with open("{}\\{}.json".format(date, dataType)) as fileData:
-                jsonData = json.load(fileData)
-                dayData = loadFun(jsonData)
-                if dayData is None:
-                    logger.info("No {} measures for {}".format(dataType, date.split('\\')[-1]))
-                    continue
-                else:
-                    data.append(dayData)
+            filename = os.path.join(date, dataType) + '.json'
+            try:
+                with open(filename) as fileData:
+                    jsonData = json.load(fileData)
+                    dayData = loadFun(jsonData)
+                    if dayData is None:
+                        logger.info("No {} measures for {}".format(dataType, date.split('\\')[-1]))
+                        continue
+                    else:
+                        data.append(dayData)
+            except FileNotFoundError:
+                logger.warning("{} not found. Might be cause last scraped day.".format(filename))
+
     return data
+
+def loadTogglData(reportsPaths, columnsToDrop=None):
+    """
+    Load a list of toggl reports in a dataframe
+    :param reportsPaths: list of reports paths
+    :param columnsToDrop: list of names of columns to drop, all need to be present
+    :return: all reports unified in a single dataframe
+    """
+    reports = []
+    # for each path, load and add report to list
+    for path in reportsPaths:
+        # lovely automatic parsing of dates as well as combination of date and time
+        report = pd.read_csv(path, parse_dates=[['Start date', 'Start time'],
+                                                ['End date', 'End time']])
+        # rename datetime columns
+        report = report.rename(index=str, columns={"Start date_Start time": "Start",
+                                                           "End date_End time": "End"})
+        # drop unnecessary fields
+        if columnsToDrop:
+            report.drop(columnsToDrop, axis=1, inplace=True)
+        reports.append(report)
+    # concatenate reports in single dataframe
+    return pd.concat(reports, ignore_index=True)
 
 def getAllSubDirsNamesOf(mainDir):
     subDirs = filter(os.path.isdir,

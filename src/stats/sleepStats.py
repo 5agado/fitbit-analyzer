@@ -3,9 +3,6 @@ import numpy as np
 from enum import Enum
 from datetime import time
 
-from util import utils
-
-
 class SleepValue(Enum):
     none = 0
     sleeping = 1

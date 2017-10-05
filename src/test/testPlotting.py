@@ -31,7 +31,6 @@ class SleepStatsTestCase(unittest.TestCase):
         stats = sleepStats.generateStatsFrom([data1, data2],
                                              sleepStats.STATS_NAME_INTRADAY)
 
-        stats.drop("date", axis=1, inplace=True)
         data = stats.apply(pd.value_counts)
         mplot.plotSleepValueHeatmap(data, sleepValue=1)
 

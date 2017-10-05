@@ -48,8 +48,6 @@ class SleepStatsTestCase(unittest.TestCase):
         data2 = utils.loadIntradayData(filepath)
         stats = sleepStats.generateIntervalsStats([data1, data2], 5)
 
-        print(stats.head())
-
         self.assertEqual(stats.iloc[0][0], 5)
         self.assertEqual(stats.iloc[0][1], 8)
         self.assertEqual(stats.iloc[0][2], 8)
@@ -57,7 +55,6 @@ class SleepStatsTestCase(unittest.TestCase):
         self.assertEqual(stats.iloc[1][1], 5)
         self.assertEqual(stats.iloc[1][2], 8)
         self.assertEqual(stats.iloc[1][3], 11)
-
 
 if __name__ == '__main__':
     unittest.main()
