@@ -67,10 +67,12 @@ Sleep values are mapped like this: 0=none (no measure taken), 1=sleeping, 2=rest
 
 ## TODO
 * provide your sleep analysis (devTesting notebook) in an automated and generic way
-* toggl data exploratory notebook
-* Moving average sleep (days for achieving flatness)
+* Toggl data exploratory notebook
+* moving average sleep (days for achieving flatness)
 * correlation between constant exercise/running and decreased heart-rate
+* formal verification of causality (e.g. good sleep causes to walk, or walk cause good sleep)
 * derive sleep-states (REM/NREM) stats (e.g. identify, how long in each) from basic ones, or via correlation with heartbeat (as for now doesn't seem to be feasible actual ECG is still the more proper option)
+* max HR and zones (% of MHR)
 
 ## License
 
