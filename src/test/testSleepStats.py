@@ -1,8 +1,8 @@
 import unittest
 
-from resources import RESOURCE_PATH
-from stats import sleepStats
-from util import utils
+from src.resources import RESOURCE_PATH
+from src.stats import sleepStats
+from src.util import utils
 import datetime
 
 class SleepStatsTestCase(unittest.TestCase):

@@ -4,7 +4,7 @@ import pandas as pd
 import seaborn as sns
 from scipy import stats as scipystats
 
-from stats import sleepStats, hbStats
+from src.stats import sleepStats, hbStats
 
 NAMES={'sleep_inefficiency':'Sleep Inefficiency (%)',
         'sleep_efficiency':'Sleep Efficiency (%)',

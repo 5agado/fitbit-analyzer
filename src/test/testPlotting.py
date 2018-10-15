@@ -1,10 +1,10 @@
 import unittest
 import pandas as pd
 
-from resources import RESOURCE_PATH
-from stats import sleepStats
-from util import utils
-from util import plotting as mplot
+from src.resources import RESOURCE_PATH
+from src.stats import sleepStats
+from src.util import utils
+from src.util import plotting as mplot
 
 class SleepStatsTestCase(unittest.TestCase):
     def test_plottingOnBasicStats(self):

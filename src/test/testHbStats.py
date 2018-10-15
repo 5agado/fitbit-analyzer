@@ -1,8 +1,8 @@
 import unittest
 
-from resources import RESOURCE_PATH
-from stats import hbStats
-from util import utils
+from src.resources import RESOURCE_PATH
+from src.stats import hbStats
+from src.util import utils
 import pandas as pd
 
 class HbStatsTestCase(unittest.TestCase):

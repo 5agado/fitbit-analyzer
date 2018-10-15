@@ -5,8 +5,7 @@ import sys
 import datetime
 from datetime import time
 
-sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
-from util import logger
+from src.util import logger
 
 def loadIntradayData(filepath):
     data = pd.read_csv(filepath, parse_dates=[0], names=['datetime', 'value'])
