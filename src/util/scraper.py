@@ -1,28 +1,26 @@
 import datetime
 import json
-import os
 import sys
 import argparse
-from os.path import join, isdir
+from pathlib import Path
 
 import fitbit
 from src.util import logger
 from src.util import gather_keys_oauth2 as Oauth2
 
 
-def dumpToFile(data_type, dumpDir, date, data):
-    directory = join(dumpDir, date.year, date)
-    if not os.path.isdir(directory):
-        os.makedirs(directory)
-    with open(join(directory, "{}.json".format(data_type)), "w") as f:
+def dumpToFile(data_type, dumpDir: Path, date, data):
+    directory = dumpDir / str(date.year) / str(date)
+    directory.mkdir(parents=True, exist_ok=True)
+    with (directory / "{}.json".format(data_type)).open(mode='w') as f:
         f.write(json.dumps(data, indent=True))
 
 
-def previouslyDumped(dumpDir, date):
-    return isdir(join(dumpDir, str(date.year), str(date)))
+def previouslyDumped(dumpDir: Path, date):
+    return (dumpDir / str(date.year) / str(date)).is_dir()
 
 
-def dumpDay(client, dumpDir, date):
+def dumpDay(client, dumpDir: Path, date):
     steps_data = client.intraday_time_series('activities/steps', date)
     intradayData = steps_data['activities-steps-intraday']['dataset']
     if not intradayData:
@@ -38,7 +36,7 @@ def dumpDay(client, dumpDir, date):
     dumpToFile("heartbeat", dumpDir, date, client.intraday_time_series('activities/heart', date))
 
 
-def scrapeFromDateOnward(startDate, dumpDir, client):
+def scrapeFromDateOnward(startDate, dumpDir: Path, client):
     date = datetime.datetime.strptime(startDate, "%Y-%m-%d").date()
     todayDate = datetime.date.today()
     while previouslyDumped(dumpDir, date):
@@ -53,7 +51,7 @@ def scrapeFromDateOnward(startDate, dumpDir, client):
         date += datetime.timedelta(days=1)
 
 
-def scrapeFromTodayAndBackward(dumpDir, client, limit, stop_if_already_dumped=True):
+def scrapeFromTodayAndBackward(dumpDir: Path, client, limit, stop_if_already_dumped=True):
     # dumping
     count = 1
     date = datetime.date.today()
@@ -69,13 +67,6 @@ def scrapeFromTodayAndBackward(dumpDir, client, limit, stop_if_already_dumped=Tr
         dumpDay(client, dumpDir, date)
         date -= datetime.timedelta(days=1)
         count += 1
-    # while not previouslyDumped(dumpDir, date) and count<limit:
-    #     logger.info("Scraping data for {}".format(date.isoformat()))
-    #     dumpDay(client, dumpDir, date)
-    #     date -= datetime.timedelta(days=1)
-    #     count += 1
-
-    # Always redump the last dumped day because we may have dumped it before the day was finished.
     dumpDay(client, dumpDir, date)
 
 
@@ -95,7 +86,7 @@ def main(_=None):
     args = parser.parse_args()
     clientId = args.clientId
     clientSecret = args.clientSecret
-    dumpDir = args.outDir
+    dumpDir = Path(args.outDir)
     startDate = args.startDate
     #limit = args.limit
 
@@ -105,7 +96,8 @@ def main(_=None):
     ACCESS_TOKEN = server.oauth.session.token['access_token']
     REFRESH_TOKEN = server.oauth.session.token['refresh_token']
 
-    client = fitbit.Fitbit(clientId, clientSecret, oauth2=True, access_token=ACCESS_TOKEN, refresh_token=REFRESH_TOKEN)
+    client = fitbit.Fitbit(clientId, clientSecret, oauth2=True,
+                           access_token=ACCESS_TOKEN, refresh_token=REFRESH_TOKEN)
 
     scrapeFromDateOnward(startDate, dumpDir, client)
 
